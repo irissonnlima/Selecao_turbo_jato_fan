@@ -18,30 +18,33 @@ PCI     = 43e6                          # J/kg K
 T04     = 1300                          # K
 
 # Dados construtivos TurboJato ----------------------------------------------------------------------------------------
-m0j     = 0
-picj    = 0
-mmjato  = 0
+m0j     = 17.6 # kg/s
+picj    = 5.33
+mmjato  = 121 # kg
 
 # Dados construtivos TurboFan -----------------------------------------------------------------------------------------
 B       = 5.00
 picf    = 30.00                         #
+pifan   = 1.65
 Afan    = pi*(2.39**2)/4                # m
 m0f     = en.f_m0(Pac, Afan, M0, Tac)   # kg/s
 mmfan   = 4273                          # kg
 
 # Dados da missão    -------------------------------------------------------------------------------------------------
-We      = 70550*g                       # kg
-Wmax    = 10e4*g                        # kg
+memp    = 70550                         # kg
+mmax    = 10e4                          # kg
 A       = 5700                          # km
 hc      = 12                            # km  
 Sgmax   = 2000                          # m
-uc      = 600                           # km/h
-up      = 500                           # km/h
+usub    = 600/3.6                       # m/s
+udesc   = 500/3.6                       # m/s
 
 Clmax   = 2.1
 Cd      = lambda Cl: 0.0181 + 0.0362*Cl**2
 Aw      = 116.3                         # m2
 neng    =  2
+
+rhofuel = 0.81                          # kg/l
 
 pi_text = [( 'pii= ',  'piLPC= ',  'piHPC= ',  'pib= ',  'piHPT= ',  'piLPT= ',  'piNS= ',  'piNP= ')]
 tau_text= [('taui= ', 'tauLPC= ', 'tauHPC= ', 'taub= ', 'tauHPT= ', 'tauLPT= ', 'tauNS= ', 'tauNP= ')]
