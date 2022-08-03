@@ -1,7 +1,13 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 #%% Engines
+def f_m0(P0, A, M, T, k=1.4, R=287):
+    P0 *= 1000
+    pp1 = P0*A*M*(k**0.5)/((R*T)**0.5)
+    pp2 = (1+(k-1)*(M**2)/2)**((-k-1)/(2*k-2))
+    return pp1*pp2
+
+
 def turbofan(B:float, PCI:float, m0:float, piHPC:float,
             piLPC:float, T04:float, Pa:float, Ta:float,
             M0:float, cp:float=1004, k:float=1.4, R:float=287) -> tuple:
@@ -94,13 +100,14 @@ def turbofan(B:float, PCI:float, m0:float, piHPC:float,
     Fn  = mah*((1+f)*uep - u0) + 1000*(P7-Pa)*Ae + (ues-u0)*mac + 1000*(P7l-Pa)*Ael
     
     # Consumo de combustível
-    TSFC= mah*f/Fn
+    TSFC= 3600*mah*f/Fn
     
-    return (pi, tau, Fn, TSFC)
+    return (pi, tau, Fn, TSFC, f)
 
 def turbojato(PCI:float, m0:float, pic:float, T04:float, 
+
               Pa:float, Ta:float, M0:float, k:float = 1.4,
-              cp:float=1004, R:float=287) -> tuple:
+              cp:float=1004, R:float=287, prt:bool = False) -> tuple:
               
 
     # Intake (1->2)
@@ -143,9 +150,9 @@ def turbojato(PCI:float, m0:float, pic:float, T04:float,
     if round(NPR,3) >= 1.892:
         Me = 1
         if round(NPR,3)==1.892:
-            print("Chocked!\nMe = 1")
+            print("Chocked!\nMe\t= 1")
         else:
-            print("Just chocked!\nMe = 1")
+            print("Just chocked!\nMe\t= 1")
     else:
         Me = np.sqrt(2*( NPR**((k-1)/k) -1 )/(k-1) )
         print(f"No chocked!\nMe = {Me}")
@@ -161,17 +168,16 @@ def turbojato(PCI:float, m0:float, pic:float, T04:float,
     u0      = M0*np.sqrt(k*R*Ta)
     ue      = Me*np.sqrt(k*R*Te)
     m_tot   = m0 + mf
-    Ae      = m_tot/(ue*Pe/R/Te)
+    Ae      = (R*Te*m_tot)/(ue*1000*Pe)
 
-    Fn      = ma*( (1+f)*ue -u0 ) + (Pe - Pa)*Ae
+    Fn      = m0*( (1+f)*ue -u0 ) + 1000*(Pe - Pa)*Ae
     
     # TSFC
-    TSFC = mf/Fn
+    TSFC = 3600*mf/Fn
 
-    return (pi,tau, Fn, TSFC)
+    return (pi,tau, Fn, TSFC, f)
 
-    
-
+#%% 
 
 
 
