@@ -13,39 +13,103 @@ pid, taud, Fnd, TSFCd,fd = en.turbojato(PCI, m0j, picj, T04, Pad, Tad, 0,cp = cp
 print('\nDados TurboJato na decolagem')
 print(f'Fn\t= {Fnd/1000} [kN]')
 print(f'TSFC\t= {TSFCd} [kg/N.h]')
+print(f'Consumo\t= {TSFCd*Fnd} [kg/.h]')
 
 #%% Cruzeiro -------------------------------------------------------------------------------------------------
 pi, tau,Fn,TSFC,f = en.turbojato(PCI, m0j, picj, T04, Pac, Tac, M0, cp = cpc)
 print('\nDados TurboJato em cruzeiro')
 print(f'Fn\t= {Fn/1000} [kN]')
 print(f'TSFC\t= {TSFC} [kg/N.h]')
+print(f'Consumo\t= {TSFC*Fn} [kg/.h]')
 
 #%%
 #                                       PARTE II
 #%% Decolagem - Take off -------------------------------------------------------------------------------------------------
+m_tot   = 100_000
+m_fuel  = m_tot - memp - neng*mmfan 
+W0      = m_tot*g
 
-# Vstall  = np.sqrt(Wmax*R*Tad/(0.5*Pad*1000*Clmax*Aw))
-# Vlo     = 1.2*Vstall 
-# a0      = np.sqrt(k*R*Tad)
-# M0d     = 0.707*Vlo/a0
-# m0_d    = en.f_m0(Pad, Afan, M0, Tad) # kg/s
+v_stall = np.sqrt( W0/(0.5*Clmax*rhod*Aw) )
+V_lo    = 1.2*v_stall
+u0      = 0.707*V_lo
+M_to    = u0/np.sqrt(k*R*Tad)
 
-# _,_,Fnd,TSFCd,f = en.turbojato(PCI, m0_d, pic, T04, Pad, Tad, M0d)
+_,_,Fnd,TSFCd,_ =en.turbojato(PCI, m0j, picj, T04, Pad, Tad, M_to, cp = cpd) 
+TSFCd/=3600
 
-# acel    = (Fnd - 0.02*Wmax)*g/Wmax
-# Sg      = Vlo**2/(2*acel)
-# Dt      = Vlo/(2*acel)
+Fn_tot  = neng*Fnd
+a_med   = g*(Fn_tot-0.02*W0)/W0
+d_to    = V_lo**2/(2*a_med)
+t_to    = V_lo/(2*a_med)
+Cd_to   = Cd(Clmax)
+D_to    = 0.5*rhod*(u0**2)*Cd_to*Aw
+SFC_to  = TSFCd*D_to*t_to
+m_to    = m_tot - SFC_to
 
-# Fn_req  = 0.5*1e3*Pad*0.707*Vlo*Cd(Clmax)*Aw
-# SFC     = TSFCd*Fn_req*Dt
+print("\nDECOLAGEM "+10*'-')
+print(f'Distância de decolagem: {d_to} m')
+print(f'Tempo de decolagem: {t_to} s')
+print(f'Massa após Takeoff: {m_to} kg')
 
-# print('\n'+10*'-'+'Impulso na decolagem'+10*'-')
-# print(f'Fn\t= {Fnd} [N]')
-# print(f'Vlo\t={Vlo} [m/s]')
-# print(f'Mad\t= {M0d}')
-# print(f'acel\t= {acel} [m/s²] ')
-# print(f'Sg\t= {Sg} [m]')
-# print(f'Deltat\t= {Dt} [s]')
+#%% Subida -----------------------------------------------------------------------------------------------------------------
+alphat  = np.deg2rad(10)
+W_up    = m_to*g -SFC_to*g
+L_up    = W_up*np.cos(alphat)
+Cl_up   = 2*L_up/(rhod**Aw*usub**2)
+Cd_up   = Cd(Cl_up)
+D_upx   = 0.5*rhod*(u0**2)*Cd_up*Aw
+D_upy   = 0.5*rhod*(usub**2)*Cd_to*Aw
+t_up    = (hc*1e3/abs( np.sin(alphat) ) )/usub    
+
+Fn_requp=D_upy/Fn_tot
+SFC_up  = TSFCd*Fn_tot*Fn_requp
+m_up    = m_to - SFC_up
+
+print("\nSUBIDA "+10*'-')
+print(f'Tempo de subida: {t_up} s')
+print(f'Massa após subida: {m_up} kg')
+
+#%% Alcance -----------------------------------------------------------------------------------------------------------------
+W_cru   = W_up - SFC_up*g
+Cl_cru  = 2*W_cru/(rhocru*Aw*(usub**2))
+Cd_cru  = Cd(Cl_cru)
+u_cru   = np.sqrt(2*W_cru/(rhocru*Aw*Cl_cru))
+M_cru   = u_cru/(np.sqrt(k*R*Tacru))
+t_cru   = A*1e3/u_cru
+D_cru   = 0.5*rhocru*(u_cru**2)*Cd_cru*Aw
+
+
+_,_,Fn,TSFCcru,_ =en.turbojato(PCI, m0j, picj, Pacru, Tacru, M_cru,cp = cpc) 
+TSFCcru /=3600
+
+Fn_totcru= neng*Fn
+Fn_reqcru= D_cru/Fn_totcru
+SFC_cru = TSFCcru*Fn_totcru*Fn_reqcru*t_cru
+m_cru   = m_up - SFC_cru
+
+print("\nCRUZEIRO "+10*'-')
+print(f"Vel. de cruzeiro   : {ucru*3.6} [km/h]")
+print(f'Mach de cruzeiro   : {M_cru}')
+print(f'Tempo de cruzeiro  : {t_cru/3600} h')
+print(f'Massa após cruzeito: {m_cru} kg')
+#%% Descida -----------------------------------------------------------------------------------------------------------------
+W_do    = W_cru - SFC_cru*g
+L_do    = W_do*np.cos(alphat)
+Cl_do   = 2*W_do/(rhocru*Aw*(udesc**2))
+Cd_do   = Cd(Cl_do)
+D_doy   = 0.5*rhocru*(udesc**2)*Cd_do*Aw
+D_dox   = 0.5*rhocru*(u0**2)*Cd_up*Aw
+Fn_reqdo= D_doy/Fn_tot
+
+t_do    = ( hc*1e3/ np.sin(alphat))/udesc
+SFC_do  = TSFCd*Fn_tot*Fn_reqdo*t_do
+
+m_do    = m_cru - SFC_do
+W_do2   = W_do - SFC_do*g
+
+print("\nDESCIDA "+10*'-')
+print(f'Tempo de descida  : {t_do} s')
+print(f'Massa após descida: {m_do} kg')
 #%% 
 
 """
@@ -57,6 +121,7 @@ pid, taud, Fnd, TSFCd,fd = en.turbofan(B, PCI, m0f, picf, pifan, T04, Pad, Tad, 
 print('\nDados TurboFan na decolagem')
 print(f'Fn\t= {Fnd/1000} [kN]')
 print(f'TSFC\t= {TSFCd} [kg/N.h]')
+print(f'Consumo\t={Fnd*TSFCd} [kg/h]')
 
 #%% Cruzeiro -------------------------------------------------------------------------------------------------
 Fntf   = []
@@ -87,54 +152,101 @@ ax2.tick_params(axis='y', labelcolor='b')
 ax2.grid(color='b', linestyle=':')
 plt.savefig('images/LPC_TSFC_Fn.png')
 plt.title(r'comportamento do $TSFC$ e $F_n$')
-plt.show()
-
-# plt.plot(piLPCx,TSFCtf)
-# plt.xlabel(r'$\pi_{LPC}$')
-# plt.ylabel(r'$TSFC[kg/N\cdot h]$')
-# plt.grid()
-# plt.title(r'Comportamento do $TSFC$ para $\pi_{LPC}$')
-# plt.savefig('images/LPC_TSFC.png')
-# plt.close()
+plt.close()
 
 pi, tau,Fn,TSFC,f = en.turbofan(B, PCI, m0f, picf, pifan,T04, Pac, Tac, M0,cp = cpc)
 print('\nDados TurboFan em cruzeiro')
 print(f'Fn\t= {Fn/1000} [kN]')
 print(f'TSFC\t= {TSFC} [kg/N.h]')
+print(f'Consumo\t={Fn*TSFCd} [kg/h]')
+
 
 
 #%%
 #                                      PARTE II
 #%% Decolagem - Take off -------------------------------------------------------------------------------------------------
-mfuel   = mmax - neng*mmfan - memp
-minit   = mmfan*neng + mfuel 
+m_tot   = 100_000
+m_fuel  = m_tot - memp - neng*mmfan 
+W0      = m_tot*g
 
-Vstall  = np.sqrt(minit*g*R*Tad/(0.5*Pad*1000*Clmax*Aw))
-Vlo     = 1.2*Vstall 
-a0      = np.sqrt(k*R*Tad)
-M0d     = 0.707*Vlo/a0
+v_stall = np.sqrt( W0/(0.5*Clmax*rhod*Aw) )
+V_lo    = 1.2*v_stall
+u0      = 0.707*V_lo
+M_to    = u0/np.sqrt(k*R*Tad)
 
-m0_d    = en.f_m0(Pad, Afan, M0, Tad) # kg/s
+_,_,Fnd,TSFCd,_ =en.turbofan(B, PCI, m0f, picf, pifan, T04, Pad, Tad, M_to, cp = cpd) 
+TSFCd/=3600
 
+Fn_tot  = neng*Fnd
+a_med   = g*(Fn_tot-0.02*W0)/W0
+d_to    = V_lo**2/(2*a_med)
+t_to    = V_lo/(2*a_med)
+Cd_to   = Cd(Clmax)
+D_to    = 0.5*rhod*(u0**2)*Cd_to*Aw
+SFC_to  = TSFCd*D_to*t_to
+m_to    = m_tot - SFC_to
 
-acel    = (Fnd - 0.02*minit*g)/(minit*g)
-Sg      = Vlo**2/(2*acel)
-Dt      = Vlo/(2*acel)
-
-Fn_req  = 0.5*1e3*Pad*0.707*Vlo*Cd(Clmax)*Aw
-SFC     = TSFCd*Fn_req*Dt
-
-mdeco   = minitial - SFC
-
-print('\n'+10*'-'+'Impulso na decolagem'+10*'-')
-print(f'Fn\t= {Fnd} [N]')
-print(f'mfuel\t={mfuel} [kg]')
-print(f'Vlo\t={Vlo} [m/s]')
-print(f'Mad\t= {M0d}')
-print(f'acel\t= {acel} [m/s²] ')
-print(f'Sg\t= {Sg} [m]')
-print(f'Deltat\t= {Dt} [s]')
-print(f'SFC\t={SFC} [kg]')
-print(f'mdeco\t={mdeco} [kg]')
+print("\nDECOLAGEM "+10*'-')
+print(f'Distância de decolagem: {d_to} m')
+print(f'Tempo de decolagem: {t_to} s')
+print(f'Massa após Takeoff: {m_to} kg')
 
 #%% Subida -----------------------------------------------------------------------------------------------------------------
+alphat  = np.deg2rad(10)
+W_up    = m_to*g -SFC_to*g
+L_up    = W_up*np.cos(alphat)
+Cl_up   = 2*L_up/(rhod**Aw*usub**2)
+Cd_up   = Cd(Cl_up)
+D_upx   = 0.5*rhod*(u0**2)*Cd_up*Aw
+D_upy   = 0.5*rhod*(usub**2)*Cd_to*Aw
+t_up    = (hc*1e3/abs( np.sin(alphat) ) )/usub    
+
+Fn_requp=D_upy/Fn_tot
+SFC_up  = TSFCd*Fn_tot*Fn_requp
+m_up    = m_to - SFC_up
+
+print("\nSUBIDA "+10*'-')
+print(f'Tempo de subida: {t_up} s')
+print(f'Massa após subida: {m_up} kg')
+
+#%% Alcance -----------------------------------------------------------------------------------------------------------------
+W_cru   = W_up - SFC_up*g
+Cl_cru  = 2*W_cru/(rhocru*Aw*(usub**2))
+Cd_cru  = Cd(Cl_cru)
+u_cru   = np.sqrt(2*W_cru/(rhocru*Aw*Cl_cru))
+M_cru   = u_cru/(np.sqrt(k*R*Tacru))
+t_cru   = A*1e3/u_cru
+D_cru   = 0.5*rhocru*(u_cru**2)*Cd_cru*Aw
+
+
+_,_,Fn,TSFCcru,_ =en.turbofan(B, PCI, m0f, picf, pifan,T04, Pacru, Tacru, M_cru,cp = cpc) 
+TSFCcru /=3600
+
+Fn_totcru= neng*Fn
+Fn_reqcru= D_cru/Fn_totcru
+SFC_cru = TSFCcru*Fn_totcru*Fn_reqcru*t_cru
+m_cru   = m_up - SFC_cru
+
+print("\nCRUZEIRO "+10*'-')
+print(f"Vel. de cruzeiro   : {ucru*3.6} [km/h]")
+print(f'Mach de cruzeiro   : {M_cru}')
+print(f'Tempo de cruzeiro  : {t_cru/3600} h')
+print(f'Massa após cruzeito: {m_cru} kg')
+#%% Descida -----------------------------------------------------------------------------------------------------------------
+W_do    = W_cru - SFC_cru*g
+L_do    = W_do*np.cos(alphat)
+Cl_do   = 2*W_do/(rhocru*Aw*(udesc**2))
+Cd_do   = Cd(Cl_do)
+D_doy   = 0.5*rhocru*(udesc**2)*Cd_do*Aw
+D_dox   = 0.5*rhocru*(u0**2)*Cd_up*Aw
+Fn_reqdo= D_doy/Fn_tot
+
+t_do    = ( hc*1e3/ np.sin(alphat))/udesc
+SFC_do  = TSFCd*Fn_tot*Fn_reqdo*t_do
+
+m_do    = m_cru - SFC_do
+W_do2   = W_do - SFC_do*g
+
+print("\nDESCIDA "+10*'-')
+print(f'Tempo de descida  : {t_do} s')
+print(f'Massa após descida: {m_do} kg')

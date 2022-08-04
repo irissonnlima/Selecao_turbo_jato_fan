@@ -1,6 +1,6 @@
 import engines as en
 from numpy import pi
-
+import numpy as np
 # Dados atmosféricos -------------------------------------------------------------------------------------------------
 Tac     = -4.83+273.15                  # K     (Temperatura de cruzeiro)
 Tad     = 15   +273.15                  # K     (Temperatura de decolagem)
@@ -11,6 +11,9 @@ cpd     = 1004.08                       # J/kg  (cp decolagem)
 R       = 287.05                        # J/kgK (constante dos gases para o ar)
 k       = 1.4 
 g       = 9.81                          # m/s²  (aceleração da gravidade)
+rhod    = Pad*1e3/(R*Tad)
+rhoc    = Pac*1e3/(R*Tac)
+
 
 # Dados construtivos gerais ------------------------------------------------------------------------------------------
 M0      = 0.85 
@@ -18,9 +21,9 @@ PCI     = 43e6                          # J/kg K
 T04     = 1300                          # K
 
 # Dados construtivos TurboJato ----------------------------------------------------------------------------------------
-m0j     = 17.6 # kg/s
-picj    = 5.33
-mmjato  = 121 # kg
+m0j     = 77    # kg/s
+picj    = 13.33
+mmjato  = 121   # kg
 
 # Dados construtivos TurboFan -----------------------------------------------------------------------------------------
 B       = 5.00
@@ -31,11 +34,15 @@ m0f     = en.f_m0(Pac, Afan, M0, Tac)   # kg/s
 mmfan   = 4273                          # kg
 
 # Dados da missão    -------------------------------------------------------------------------------------------------
+Pacru   = 18.7                          # kPa
+Tacru   = -55 +273.15                   # kPa
+rhocru  = Pac*1e3/(R*Tac)               # kg/m³
 memp    = 70550                         # kg
 mmax    = 10e4                          # kg
 A       = 5700                          # km
 hc      = 12                            # km  
 Sgmax   = 2000                          # m
+ucru    = M0*np.sqrt(k*R*Tacru)         # m/s
 usub    = 600/3.6                       # m/s
 udesc   = 500/3.6                       # m/s
 
