@@ -107,7 +107,7 @@ def turbofan(B:float, PCI:float, m0:float, piHPC:float,
 def turbojato(PCI:float, m0:float, pic:float, T04:float, 
 
               Pa:float, Ta:float, M0:float, k:float = 1.4,
-              cp:float=1004, R:float=287, prt:bool = False) -> tuple:
+              cp:float=1004, R:float=287) -> tuple:
               
 
     # Intake (1->2)

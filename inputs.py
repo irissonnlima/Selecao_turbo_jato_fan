@@ -49,9 +49,6 @@ udesc   = 500/3.6                       # m/s
 Clmax   = 2.1
 Cd      = lambda Cl: 0.0181 + 0.0362*Cl**2
 Aw      = 116.3                         # m2
-neng    =  2
-
+nengf   =  2
+nengj   =  4
 rhofuel = 0.81                          # kg/l
-
-pi_text = [( 'pii= ',  'piLPC= ',  'piHPC= ',  'pib= ',  'piHPT= ',  'piLPT= ',  'piNS= ',  'piNP= ')]
-tau_text= [('taui= ', 'tauLPC= ', 'tauHPC= ', 'taub= ', 'tauHPT= ', 'tauLPT= ', 'tauNS= ', 'tauNP= ')]
