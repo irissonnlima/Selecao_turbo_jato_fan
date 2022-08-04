@@ -104,7 +104,7 @@ MfuelMissionj.append(m_cru-m_wetj)
 FnMissionj.append(Fn_totcru)
 Mj.append(m_cru)
 print("\nCRUZEIRO "+10*'-')
-print(f"Vel. de cruzeiro   : {ucru*3.6} [km/h]")
+print(f"Vel. de cruzeiro   : {u_cru*3.6} [km/h]")
 print(f'Mach de cruzeiro   : {M_cru}')
 print(f'Tempo de cruzeiro  : {t_cru/3600} h')
 print(f'Massa após cruzeito: {m_cru} kg')
@@ -200,7 +200,7 @@ M_to    = u0/np.sqrt(k*R*Tad)
 
 _,_,Fnd,TSFCd,_ =en.turbofan(B, PCI, m0f, picf, pifan, T04, Pad, Tad, M_to, cp = cpd) 
 TSFCd/=3600
-
+Fn_tot  = nengf*Fnd
 a_med   = g*(Fn_tot-0.02*W0)/W0
 d_to    = V_lo**2/(2*a_med)
 t_to    = V_lo/(2*a_med)
@@ -265,7 +265,7 @@ FnMissionf.append(Fn_totcru)
 Mf.append(m_cru)
 
 print("\nCRUZEIRO "+10*'-')
-print(f"Vel. de cruzeiro   : {ucru*3.6} [km/h]")
+print(f"Vel. de cruzeiro   : {u_cru} [m/s]")
 print(f'Mach de cruzeiro   : {M_cru}')
 print(f'Tempo de cruzeiro  : {t_cru/3600} h')
 print(f'Massa após cruzeito: {m_cru} kg')
